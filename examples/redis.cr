@@ -30,3 +30,4 @@ end
 
 p res.size
 p limited_count
+p limiter.stats

@@ -1,13 +1,5 @@
 require "./spec_helper"
 
-$redis = Redis.new
-
-def cleanup
-  $redis.keys("limiter-*").each do |key|
-    $redis.del key
-  end
-end
-
 describe Limiter::Redis do
   it "no limits" do
     l = Limiter::Redis.new($redis)
@@ -63,8 +55,6 @@ describe Limiter::Redis do
   end
 
   it "complex case" do
-    cleanup
-
     l = Limiter::Redis.new($redis)
     l.add_limit(1.seconds, 10)
     l.add_limit(2.seconds, 15)
@@ -91,7 +81,6 @@ describe Limiter::Redis do
   end
 
   it "clear" do
-    cleanup
     l = Limiter::Redis.new($redis)
     l.add_limit(1.seconds, 10)
 
@@ -108,5 +97,16 @@ describe Limiter::Redis do
       l.request { i }.should eq(Limiter::Result(Int32).new(i))
     end
     l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+  end
+
+  it "stats" do
+    l = Limiter::Redis.new($redis)
+    l.add_limit(1.seconds, 10)
+
+    9.times do |i|
+      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+    end
+
+    l.stats.should eq({1.seconds => {9, 10}})
   end
 end

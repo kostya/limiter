@@ -3,7 +3,7 @@ require "../limiter"
 
 class Limiter::Redis < Limiter
   struct Entry
-    getter interval
+    getter interval, max_count
 
     def initialize(@interval : Time::Span, @milliseconds : UInt64, @max_count : UInt64, @redis : ::Redis, @key : String)
       @key_ttl = "#{key}-ttl"
@@ -27,6 +27,15 @@ class Limiter::Redis < Limiter
       return false if (val = @redis.get(@key_ttl)) && (Time.now.epoch_ms - val.to_u64) < @milliseconds
       init_key
       true
+    end
+
+    def current_count
+      return 0_u64 if expire_key!
+      if val = @redis.get(@key)
+        val.to_u64
+      else
+        0_u64
+      end
     end
 
     def clear
@@ -69,5 +78,13 @@ class Limiter::Redis < Limiter
 
   def clear
     @entries.each &.clear
+  end
+
+  def stats
+    h = {} of Time::Span => {UInt64, UInt64}
+    @entries.each do |e|
+      h[e.interval] = {e.current_count, e.max_count}
+    end
+    h
   end
 end

@@ -1,9 +1,9 @@
 class Limiter::Memory < Limiter
   class Entry
-    getter interval
+    getter interval, max_count
 
     def initialize(@interval : Time::Span, @max_count : UInt64)
-      @current_count = 0
+      @current_count = 0_u64
     end
 
     def increment
@@ -11,7 +11,11 @@ class Limiter::Memory < Limiter
     end
 
     def clear
-      @current_count = 0
+      @current_count = 0_u64
+    end
+
+    def current_count
+      @current_count
     end
 
     def limited?
@@ -55,6 +59,14 @@ class Limiter::Memory < Limiter
       return {true, entry.interval} if entry.limited?
     end
     {false, nil}
+  end
+
+  def stats
+    h = {} of Time::Span => {UInt64, UInt64}
+    @entries.each do |e|
+      h[e.interval] = {e.current_count, e.max_count}
+    end
+    h
   end
 
   private def run_entry(entry)

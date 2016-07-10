@@ -98,4 +98,16 @@ describe Limiter::Memory do
     end
     l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
   end
+
+  it "stats" do
+    l = Limiter::Memory.new
+    l.add_limit(1.seconds, 10)
+
+    9.times do |i|
+      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+    end
+
+    l.stats.should eq({1.seconds => {9, 10}})
+  end
+
 end

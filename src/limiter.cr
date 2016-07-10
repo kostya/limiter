@@ -27,16 +27,12 @@ class Limiter
   end
 
   def request(force = false, &block : -> T)
-    if force
-      do_request { yield }
-    else
-      limited, by = limited?
+    limited, by = limited?
 
-      if limited
-        Error.new(by.not_nil!)
-      else
-        do_request { yield }
-      end
+    if limited && !force
+      Error.new(by.not_nil!)
+    else
+      do_request { yield }
     end
   end
 
