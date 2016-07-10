@@ -13,8 +13,22 @@ dependencies:
     github: kostya/limiter
 ```
 
+## Basic Limiter Usage
 
-## Usage Memory Limiter
+```crystal
+require "limiter"
+limiter = Limiter::Memory.new
+limiter.add_limit(2.seconds, 10) # allow 10 requests per 2.seconds
+limiter.add_limit(1.hour, 1000)  # allow 1000 requests per 1.hour
+
+res = limiter.request { some_high_cost_action }
+# res is Union of: 
+#   Limiter::Result(T), value # => result of some_high_cost_action
+#   Limiter::Error, limited_by
+
+```
+
+## Example Memory Limiter
 
 
 ```crystal
@@ -49,7 +63,7 @@ p res.size
 p limited_count
 ```
 
-## Usage Redis Limiter
+## Example Redis Limiter
 
 ```crystal
 require "redis" # https://github.com/stefanwille/crystal-redis
