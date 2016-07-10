@@ -18,7 +18,7 @@ dependencies:
 
 
 ```crystal
-require "../src/limiter"
+require "limiter"
 
 limiter = Limiter::Memory.new
 limiter.add_limit(2.seconds, 10) # allow 10 requests per 2.seconds
