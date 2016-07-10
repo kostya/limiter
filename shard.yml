@@ -1,0 +1,12 @@
+name: limiter
+version: 0.1.0
+
+authors:
+  - Konstantin Makarchev <kostya27@gmail.com>
+
+dependencies:
+  redis:
+    github: stefanwille/crystal-redis
+    branch: master
+
+license: MIT
