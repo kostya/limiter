@@ -23,6 +23,9 @@ class Limiter
     {false, nil}
   end
 
+  def clear
+  end
+
   def request(force = false, &block : -> T)
     if force
       do_request { yield }

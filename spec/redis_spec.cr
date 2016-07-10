@@ -89,4 +89,24 @@ describe Limiter::Redis do
     end
     l.request { 111 }.should eq(Limiter::Error.new(3.seconds))
   end
+
+  it "clear" do
+    cleanup
+    l = Limiter::Redis.new($redis)
+    l.add_limit(1.seconds, 10)
+
+    9.times do |i|
+      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+    end
+    sleep 0.1
+    l.request { 110 }.should eq(Limiter::Result(Int32).new(110))
+    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+
+    l.clear
+
+    10.times do |i|
+      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+    end
+    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+  end
 end

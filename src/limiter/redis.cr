@@ -29,6 +29,10 @@ class Limiter::Redis < Limiter
       true
     end
 
+    def clear
+      init_key
+    end
+
     private def init_key
       @redis.multi do |multi|
         multi.set(@key_ttl, Time.now.epoch_ms)
@@ -61,5 +65,9 @@ class Limiter::Redis < Limiter
       return {true, entry.interval} if entry.limited?
     end
     {false, nil}
+  end
+
+  def clear
+    @entries.each &.clear
   end
 end

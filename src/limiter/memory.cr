@@ -42,6 +42,10 @@ class Limiter::Memory < Limiter
     switch_coroutines
   end
 
+  def clear
+    @entries.each &.clear
+  end
+
   def increment_request
     @entries.each &.increment
   end
