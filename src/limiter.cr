@@ -15,7 +15,6 @@ class Limiter
   protected def limited? : Tuple(Bool, Time::Span?)
     {false, nil}
   end
-
   def clear
   end
 

@@ -14,17 +14,15 @@ def some_high_cost_action : Result
 end
 
 res = [] of Result
-limited_count = 0
 
-1000.times do
+50.times do
   if val = limiter.request? { some_high_cost_action }
     res << val
   else
-    limited_count += 1
+    x = limiter.next_usage_after
+    puts "processed: #{res.size}, next usage after #{x} seconds"
+    sleep(x)
   end
 end
 
-p res.size
-p limited_count
-p limiter.stats
-p limiter.next_usage_after
+puts "processed #{res.size}"

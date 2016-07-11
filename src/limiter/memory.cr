@@ -94,7 +94,8 @@ class Limiter::Memory < Limiter
     limited = @entries.select &.limited?
     return 0.seconds if limited.empty?
 
-    limited.map { |e| e.next_free_after }.max
+    res = limited.map { |e| e.next_free_after }.max
+    res.to_f < 0 ? 0.seconds : res
   end
 
   protected def after_request
