@@ -4,7 +4,7 @@ describe Limiter::Redis do
   it "no limits" do
     l = Limiter::Redis.new($redis)
     10000.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
   end
 
@@ -13,18 +13,18 @@ describe Limiter::Redis do
     l.add_limit(1.seconds, 10)
 
     9.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
     sleep 0.9
-    l.request { 110 }.should eq(Limiter::Result(Int32).new(110))
-    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+    l.request? { 110 }.should eq 110
+    l.request? { 111 }.should eq nil
 
     sleep 0.2
 
     10.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
-    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+    l.request? { 111 }.should eq nil
   end
 
   it "allowed by force" do
@@ -32,9 +32,9 @@ describe Limiter::Redis do
     l.add_limit(1.seconds, 10)
 
     1000.times do |i|
-      l.request(force: true) { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request?(force: true) { i }.should eq i
     end
-    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+    l.request? { 111 }.should eq nil
   end
 
   it "work with small interval" do
@@ -42,16 +42,16 @@ describe Limiter::Redis do
     l.add_limit(0.01.seconds, 10)
 
     10.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
-    l.request { 111 }.should eq(Limiter::Error.new(0.01.seconds))
+    l.request? { 111 }.should eq nil
 
     sleep 0.02
 
     10.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
-    l.request { 111 }.should eq(Limiter::Error.new(0.01.seconds))
+    l.request? { 111 }.should eq nil
   end
 
   it "complex case" do
@@ -61,23 +61,23 @@ describe Limiter::Redis do
     l.add_limit(3.seconds, 20)
 
     10.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request! { i }.should eq i
     end
 
-    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+    should_raise_with(1.seconds) { l.request! { 111 } }
     sleep 1.1
 
     5.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request! { i }.should eq i
     end
-    l.request { 111 }.should eq(Limiter::Error.new(2.seconds))
+    should_raise_with(2.seconds) { l.request! { 111 } }
 
     sleep 1.1
 
     5.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request! { i }.should eq i
     end
-    l.request { 111 }.should eq(Limiter::Error.new(3.seconds))
+    should_raise_with(3.seconds) { l.request! { 111 } }
   end
 
   it "clear" do
@@ -85,18 +85,18 @@ describe Limiter::Redis do
     l.add_limit(1.seconds, 10)
 
     9.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
     sleep 0.1
-    l.request { 110 }.should eq(Limiter::Result(Int32).new(110))
-    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+    l.request? { 110 }.should eq 110
+    l.request? { 111 }.should eq nil
 
     l.clear
 
     10.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
-    l.request { 111 }.should eq(Limiter::Error.new(1.seconds))
+    l.request? { 111 }.should eq nil
   end
 
   it "stats" do
@@ -104,7 +104,7 @@ describe Limiter::Redis do
     l.add_limit(1.seconds, 10)
 
     9.times do |i|
-      l.request { i }.should eq(Limiter::Result(Int32).new(i))
+      l.request? { i }.should eq i
     end
 
     l.stats.should eq({1.seconds => {9, 10}})

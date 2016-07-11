@@ -17,10 +17,9 @@ res = [] of Result
 limited_count = 0
 
 1000.times do
-  case resp = limiter.request { some_high_cost_action }
-  when Limiter::Result
-    res << resp.value
-  when Limiter::Error
+  if val = limiter.request? { some_high_cost_action }
+    res << val
+  else
     limited_count += 1
   end
 end

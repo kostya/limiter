@@ -13,3 +13,12 @@ end
 Spec.before_each do
   cleanup
 end
+
+def should_raise_with(limited_by)
+  begin
+    yield
+    raise "Expected raises, but not"
+  rescue ex : Limiter::Error
+    ex.limited_by.should eq limited_by
+  end
+end

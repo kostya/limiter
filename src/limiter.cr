@@ -2,14 +2,7 @@ class Limiter
   def initialize
   end
 
-  struct Result(T)
-    getter value : T
-
-    def initialize(@value)
-    end
-  end
-
-  struct Error
+  class Error < Exception
     getter limited_by : Time::Span
 
     def initialize(@limited_by)
@@ -26,20 +19,27 @@ class Limiter
   def clear
   end
 
-  def request(force = false, &block : -> T)
+  # request with limits, raised if request is not possible
+  def request!(force = false, &block)
     limited, by = limited?
 
     if limited && !force
-      Error.new(by.not_nil!)
+      raise Error.new(by.not_nil!)
     else
       do_request { yield }
     end
   end
 
-  private def do_request(&block : -> T)
+  # request with limits, return nil if request is not possible
+  def request?(force = false, &block)
+    request!(force) { yield }
+  rescue ex : Error
+    nil
+  end
+
+  private def do_request(&block)
     increment_request
-    res = yield
-    Result(T).new(res)
+    yield
   ensure
     after_request
   end
