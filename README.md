@@ -21,8 +21,8 @@ limiter = Limiter::Memory.new
 limiter.add_limit(2.seconds, 10) # allow 10 requests per 2.seconds
 limiter.add_limit(1.hour, 1000)  # allow 1000 requests per 1.hour
 
-res = limiter.request? { some_high_cost_action } => return value of block or nil
-res = limiter.request! { some_high_cost_action } => return value of block or raise Limiter::Error
+res = limiter.request? { some_high_cost_action } # => return value of block or nil
+res = limiter.request! { some_high_cost_action } # => return value of block or raise Limiter::Error
 
 ```
 
