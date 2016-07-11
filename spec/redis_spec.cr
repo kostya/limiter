@@ -109,4 +109,46 @@ describe Limiter::Redis do
 
     l.stats.should eq({1.seconds => {9, 10}})
   end
+
+  describe "next_usage_at" do
+    it "simple" do
+      l = Limiter::Redis.new($redis).add_limit(1.seconds, 1)
+      l.request? { 1 }.should eq 1
+      l.request? { 1 }.should eq nil
+      (l.next_usage_at - Time.now).to_f.should be_close(1.0, 0.01)
+    end
+
+    it "2 limits max of two" do
+      l = Limiter::Redis.new($redis).add_limit(1.seconds, 1).add_limit(2.seconds, 1)
+      l.request? { 1 }.should eq 1
+      l.request? { 1 }.should eq nil
+      (l.next_usage_at - Time.now).to_f.should be_close(2.0, 0.01)
+    end
+
+    it "2 limits min of two" do
+      l = Limiter::Redis.new($redis).add_limit(1.seconds, 10).add_limit(1.hour, 1000)
+      10.times { l.request? { 1 }.should eq 1 }
+      sleep 0.7
+      (l.next_usage_at - Time.now).to_f.should be_close(0.3, 0.01)
+    end
+
+    it "no requests" do
+      l = Limiter::Redis.new($redis).add_limit(1.seconds, 1).add_limit(2.seconds, 1).add_limit(3.seconds, 2)
+      (l.next_usage_at - Time.now).to_f.should be_close(0.0, 0.01)
+    end
+
+    it "less than limit" do
+      l = Limiter::Redis.new($redis).add_limit(1.seconds, 10).add_limit(2.seconds, 10).add_limit(3.seconds, 20)
+      l.request? { 1 }.should eq 1
+      (l.next_usage_at - Time.now).to_f.should be_close(0.0, 0.01)
+    end
+
+    it "complex" do
+      l = Limiter::Redis.new($redis).add_limit(1.seconds, 10).add_limit(2.seconds, 20)
+      10.times { l.request? { 1 }.should eq 1 }
+      sleep 1.5
+      10.times { l.request? { 1 }.should eq 1 }
+      (l.next_usage_at - Time.now).to_f.should be_close(0.5, 0.01)
+    end
+  end
 end

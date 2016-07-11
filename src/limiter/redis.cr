@@ -42,8 +42,21 @@ class Limiter::Redis < Limiter
       init_key
     end
 
+    def next_free_at
+      return Time.now if expire_key!
+
+      if (val = @redis.get(@key_ttl))
+        p val.to_u64
+        p Time.epoch_ms(val.to_u64)
+        Time.epoch_ms(val.to_u64) + interval
+      else
+        Time.now
+      end
+    end
+
     private def init_key
       @redis.multi do |multi|
+        p Time.now.epoch_ms
         multi.set(@key_ttl, Time.now.epoch_ms)
         multi.pexpire(@key_ttl, @milliseconds)
         multi.set(@key, "0")
@@ -63,6 +76,7 @@ class Limiter::Redis < Limiter
     milliseconds = interval.total_milliseconds.to_u64
     entry = Entry.new(interval, milliseconds, count.to_u64, @redis, "limiter-#{@name}-#{milliseconds}")
     @entries << entry
+    self
   end
 
   def increment_request
@@ -86,5 +100,12 @@ class Limiter::Redis < Limiter
       h[e.interval] = {e.current_count, e.max_count}
     end
     h
+  end
+
+  def next_usage_at
+    limited = @entries.select &.limited?
+    return Time.now if limited.empty?
+
+    limited.map { |e| e.next_free_at }.max
   end
 end
