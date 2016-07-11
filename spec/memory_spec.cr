@@ -39,19 +39,19 @@ describe Limiter::Memory do
 
   it "work with small interval" do
     l = Limiter::Memory.new
-    l.add_limit(0.01.seconds, 10)
+    l.add_limit(0.1.seconds, 10)
 
     10.times do |i|
       l.request { i }.should eq(Limiter::Result(Int32).new(i))
     end
-    l.request { 111 }.should eq(Limiter::Error.new(0.01.seconds))
+    l.request { 111 }.should eq(Limiter::Error.new(0.1.seconds))
 
-    sleep 0.05
+    sleep 0.15
 
     10.times do |i|
       l.request { i }.should eq(Limiter::Result(Int32).new(i))
     end
-    l.request { 111 }.should eq(Limiter::Error.new(0.01.seconds))
+    l.request { 111 }.should eq(Limiter::Error.new(0.1.seconds))
   end
 
   it "complex case" do
