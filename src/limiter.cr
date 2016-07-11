@@ -39,8 +39,9 @@ class Limiter
   private def do_request(&block : -> T)
     increment_request
     res = yield
-    after_request
     Result(T).new(res)
+  ensure
+    after_request
   end
 
   protected def after_request
