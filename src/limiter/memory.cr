@@ -4,6 +4,7 @@ class Limiter::Memory < Limiter
 
     def initialize(@interval : Time::Span, @max_count : UInt64)
       @current_count = 0_u64
+      @stopped = false
     end
 
     def increment
@@ -21,6 +22,20 @@ class Limiter::Memory < Limiter
     def limited?
       @current_count >= @max_count
     end
+
+    def stop!
+      @stopped = true
+    end
+
+    def async_run
+      spawn do
+        loop do
+          clear
+          sleep(interval)
+          break if @stopped
+        end
+      end
+    end
   end
 
   getter entries
@@ -28,7 +43,6 @@ class Limiter::Memory < Limiter
   def initialize
     super
     @entries = [] of Entry
-    @stopped = false
   end
 
   def finalize
@@ -36,13 +50,13 @@ class Limiter::Memory < Limiter
   end
 
   def stop
-    @stopped = true
+    @entries.each &.stop!
   end
 
   def add_limit(interval : Time::Span, count)
     entry = Entry.new(interval, count.to_u64)
     @entries << entry
-    run_entry(entry)
+    entry.async_run
     switch_coroutines
   end
 
@@ -67,16 +81,6 @@ class Limiter::Memory < Limiter
       h[e.interval] = {e.current_count, e.max_count}
     end
     h
-  end
-
-  private def run_entry(entry)
-    spawn do
-      loop do
-        entry.clear
-        sleep(entry.interval)
-        break if @stopped
-      end
-    end
   end
 
   protected def after_request
