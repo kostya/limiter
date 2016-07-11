@@ -29,8 +29,8 @@ class Limiter::Memory < Limiter
       @stopped = true
     end
 
-    def next_free_at
-      @clear_at + interval
+    def next_free_after : Time::Span
+      @clear_at + interval - Time.now
     end
 
     def async_run
@@ -90,11 +90,11 @@ class Limiter::Memory < Limiter
     h
   end
 
-  def next_usage_at
+  def next_usage_after
     limited = @entries.select &.limited?
-    return Time.now if limited.empty?
+    return 0.seconds if limited.empty?
 
-    limited.map { |e| e.next_free_at }.max
+    limited.map { |e| e.next_free_after }.max
   end
 
   protected def after_request

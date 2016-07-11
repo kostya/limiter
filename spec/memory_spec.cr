@@ -80,6 +80,18 @@ describe Limiter::Memory do
     should_raise_with(3.seconds) { l.request! { 111 } }
   end
 
+  it "complex case2" do
+    l = Limiter::Memory.new
+    l.add_limit(1.seconds, 10)
+    l.add_limit(2.seconds, 5)
+
+    5.times { |i| l.request! { i }.should eq i }
+    should_raise_with(2.seconds) { l.request! { 111 } }
+
+    sleep 1.1
+    l.request? { 1 }.should eq nil
+  end
+
   it "clear" do
     l = Limiter::Memory.new
     l.add_limit(1.seconds, 10)
@@ -110,37 +122,37 @@ describe Limiter::Memory do
     l.stats.should eq({1.seconds => {9, 10}})
   end
 
-  describe "next_usage_at" do
+  describe "next_usage_after" do
     it "simple" do
       l = Limiter::Memory.new.add_limit(1.seconds, 1)
       l.request? { 1 }.should eq 1
       l.request? { 1 }.should eq nil
-      (l.next_usage_at - Time.now).to_f.should be_close(1.0, 0.01)
+      l.next_usage_after.to_f.should be_close(1.0, 0.01)
     end
 
     it "2 limits max of two" do
       l = Limiter::Memory.new.add_limit(1.seconds, 1).add_limit(2.seconds, 1)
       l.request? { 1 }.should eq 1
       l.request? { 1 }.should eq nil
-      (l.next_usage_at - Time.now).to_f.should be_close(2.0, 0.01)
+      l.next_usage_after.to_f.should be_close(2.0, 0.01)
     end
 
     it "2 limits min of two" do
       l = Limiter::Memory.new.add_limit(1.seconds, 10).add_limit(1.hour, 1000)
       10.times { l.request? { 1 }.should eq 1 }
       sleep 0.7
-      (l.next_usage_at - Time.now).to_f.should be_close(0.3, 0.01)
+      l.next_usage_after.to_f.should be_close(0.3, 0.01)
     end
 
     it "no requests" do
       l = Limiter::Memory.new.add_limit(1.seconds, 1).add_limit(2.seconds, 1).add_limit(3.seconds, 2)
-      (l.next_usage_at - Time.now).to_f.should be_close(0.0, 0.01)
+      l.next_usage_after.to_f.should be_close(0.0, 0.01)
     end
 
     it "less than limit" do
       l = Limiter::Memory.new.add_limit(1.seconds, 10).add_limit(2.seconds, 10).add_limit(3.seconds, 20)
       l.request? { 1 }.should eq 1
-      (l.next_usage_at - Time.now).to_f.should be_close(0.0, 0.01)
+      l.next_usage_after.to_f.should be_close(0.0, 0.01)
     end
 
     it "complex" do
@@ -148,7 +160,7 @@ describe Limiter::Memory do
       10.times { l.request? { 1 }.should eq 1 }
       sleep 1.5
       10.times { l.request? { 1 }.should eq 1 }
-      (l.next_usage_at - Time.now).to_f.should be_close(0.5, 0.01)
+      l.next_usage_after.to_f.should be_close(0.5, 0.01)
     end
   end
 end

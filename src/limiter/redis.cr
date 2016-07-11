@@ -24,7 +24,7 @@ class Limiter::Redis < Limiter
     end
 
     def expire_key!
-      return false if (val = @redis.get(@key_ttl)) && (Time.now.epoch_ms - val.to_u64) < @milliseconds
+      return false if (val = @redis.get(@key_ttl)) && (Time.utc_now.epoch_ms - val.to_u64) < @milliseconds
       init_key
       true
     end
@@ -42,22 +42,19 @@ class Limiter::Redis < Limiter
       init_key
     end
 
-    def next_free_at
-      return Time.now if expire_key!
+    def next_free_after : Time::Span
+      return 0.seconds if expire_key!
 
       if (val = @redis.get(@key_ttl))
-        p val.to_u64
-        p Time.epoch_ms(val.to_u64)
-        Time.epoch_ms(val.to_u64) + interval
+        Time.epoch_ms(val.to_u64) + interval - Time.utc_now
       else
-        Time.now
+        0.seconds
       end
     end
 
     private def init_key
       @redis.multi do |multi|
-        p Time.now.epoch_ms
-        multi.set(@key_ttl, Time.now.epoch_ms)
+        multi.set(@key_ttl, Time.utc_now.epoch_ms)
         multi.pexpire(@key_ttl, @milliseconds)
         multi.set(@key, "0")
         multi.pexpire(@key, @milliseconds)
@@ -102,10 +99,10 @@ class Limiter::Redis < Limiter
     h
   end
 
-  def next_usage_at
+  def next_usage_after
     limited = @entries.select &.limited?
-    return Time.now if limited.empty?
+    return 0.seconds if limited.empty?
 
-    limited.map { |e| e.next_free_at }.max
+    limited.map { |e| e.next_free_after }.max
   end
 end

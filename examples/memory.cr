@@ -24,8 +24,7 @@ limited_count = 0
   end
 end
 
-p Time.now
 p res.size
 p limited_count
 p limiter.stats
-p limiter.next_usage_at
+p limiter.next_usage_after
