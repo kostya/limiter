@@ -31,9 +31,13 @@ class Limiter
 
   # request with limits, return nil if request is not possible
   def request?(force = false, &block)
-    request!(force) { yield }
-  rescue ex : Error
-    nil
+    limited, by = limited?
+
+    if limited && !force
+      nil
+    else
+      do_request { yield }
+    end
   end
 
   private def do_request(&block)
