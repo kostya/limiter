@@ -9,16 +9,13 @@ class Limiter::Redis < Limiter
     end
 
     def increment
-      @redis.incr(@key)
+      # nothing, because incremented in limited
     end
 
     def limited?
-      if val = @redis.get(@key)
-        val.to_u64 >= @max_count
-      else
-        init_key
-        false
-      end
+      val = @redis.incr(@key).not_nil!.to_u64
+      @redis.pexpireat(@key, Time.now.epoch_ms + @milliseconds) if val == 1_u64
+      val > @max_count
     end
 
     def current_count
