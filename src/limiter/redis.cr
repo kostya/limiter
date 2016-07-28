@@ -14,7 +14,7 @@ class Limiter::Redis < Limiter
 
     def limited?
       val = @redis.incr(@key).not_nil!.to_u64
-      @redis.pexpireat(@key, Time.now.epoch_ms + @milliseconds) if val == 1_u64
+      @redis.pexpireat(@key, expire_at) if val == 1_u64
       val > @max_count
     end
 
@@ -41,8 +41,12 @@ class Limiter::Redis < Limiter
     private def init_key
       @redis.multi do |multi|
         multi.set(@key, "0")
-        multi.pexpireat(@key, Time.now.epoch_ms + @milliseconds)
+        multi.pexpireat(@key, expire_at)
       end
+    end
+
+    private def expire_at
+      Time.now.epoch_ms + @milliseconds
     end
   end
 
