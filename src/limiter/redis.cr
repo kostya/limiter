@@ -6,7 +6,6 @@ class Limiter::Redis < Limiter
     getter interval, max_count
 
     def initialize(@interval : Time::Span, @milliseconds : UInt64, @max_count : UInt64, @redis : ::Redis, @key : String)
-      @key_ttl = "#{key}-ttl"
     end
 
     def increment
@@ -14,23 +13,15 @@ class Limiter::Redis < Limiter
     end
 
     def limited?
-      return false if expire_key!
-
       if val = @redis.get(@key)
         val.to_u64 >= @max_count
       else
+        init_key
         false
       end
     end
 
-    def expire_key!
-      return false if (val = @redis.get(@key_ttl)) && (Time.utc_now.epoch_ms - val.to_u64) < @milliseconds
-      init_key
-      true
-    end
-
     def current_count
-      return 0_u64 if expire_key!
       if val = @redis.get(@key)
         val.to_u64
       else
@@ -43,10 +34,8 @@ class Limiter::Redis < Limiter
     end
 
     def next_free_after : Time::Span
-      return 0.seconds if expire_key!
-
-      if (val = @redis.get(@key_ttl))
-        Time.epoch_ms(val.to_u64) + interval - Time.utc_now
+      if (val = @redis.pttl(@key))
+        val.to_u64.milliseconds
       else
         0.seconds
       end
@@ -54,10 +43,8 @@ class Limiter::Redis < Limiter
 
     private def init_key
       @redis.multi do |multi|
-        multi.set(@key_ttl, Time.utc_now.epoch_ms)
-        multi.pexpire(@key_ttl, @milliseconds)
         multi.set(@key, "0")
-        multi.pexpire(@key, @milliseconds)
+        multi.pexpireat(@key, Time.now.epoch_ms + @milliseconds)
       end
     end
   end
