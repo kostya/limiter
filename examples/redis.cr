@@ -1,5 +1,5 @@
 require "redisoid" # https://github.com/kostya/redisoid
-require "../src/limiter/redis"
+require "../src/limiter"
 
 redis_client = Redisoid.new
 

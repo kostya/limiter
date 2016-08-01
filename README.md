@@ -64,7 +64,7 @@ p limited_count
 
 ```crystal
 require "redisoid" # https://github.com/kostya/redisoid
-require "../src/limiter/redis"
+require "limiter"
 
 redis_client = Redisoid.new
 

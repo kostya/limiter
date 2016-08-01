@@ -54,3 +54,4 @@ class Limiter
 end
 
 require "./limiter/memory"
+require "./limiter/redis"
