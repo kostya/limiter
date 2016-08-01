@@ -1,11 +1,10 @@
-require "redis"
 require "../limiter"
 
-class Limiter::Redis < Limiter
-  struct Entry
+class Limiter::Redis(T) < Limiter
+  struct Entry(T)
     getter interval, max_count
 
-    def initialize(@interval : Time::Span, @milliseconds : UInt64, @max_count : UInt64, @redis : ::Redis, @key : String)
+    def initialize(@interval : Time::Span, @milliseconds : UInt64, @max_count : UInt64, @redis : T, @key : String)
     end
 
     def increment
@@ -52,14 +51,14 @@ class Limiter::Redis < Limiter
 
   getter entries
 
-  def initialize(@redis : ::Redis, @name = "default")
+  def initialize(@redis : T, @name = "default")
     super()
-    @entries = [] of Entry
+    @entries = [] of Entry(T)
   end
 
   def add_limit(interval : Time::Span, count)
     milliseconds = interval.total_milliseconds.to_u64
-    entry = Entry.new(interval, milliseconds, count.to_u64, @redis, "limiter-#{@name}-#{milliseconds}")
+    entry = Entry(T).new(interval, milliseconds, count.to_u64, @redis, "limiter-#{@name}-#{milliseconds}")
     @entries << entry
     self
   end

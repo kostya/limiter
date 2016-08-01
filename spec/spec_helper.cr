@@ -1,8 +1,9 @@
 require "spec"
 require "../src/limiter"
 require "../src/limiter/redis"
+require "redisoid"
 
-$redis = Redis.new
+$redis = Redisoid.new
 
 def cleanup
   $redis.keys("limiter-*").each do |key|
