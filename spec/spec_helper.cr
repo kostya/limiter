@@ -3,11 +3,17 @@ require "../src/limiter"
 require "../src/limiter/redis"
 require "redisoid"
 
-$redis = Redisoid.new
+class Global
+  @@redis : Redisoid?
+
+  def self.redis
+    @@redis ||= Redisoid.new
+  end
+end
 
 def cleanup
-  $redis.keys("limiter-*").each do |key|
-    $redis.del key
+  Global.redis.keys("limiter-*").each do |key|
+    Global.redis.del key
   end
 end
 

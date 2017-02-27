@@ -1,4 +1,9 @@
 class Limiter
+  VERSION = "0.1"
+
+  module Concurrency
+  end
+
   def initialize
   end
 
@@ -55,3 +60,5 @@ end
 
 require "./limiter/memory"
 require "./limiter/redis"
+require "./limiter/concurrency_memory"
+require "./limiter/concurrency_redis"
