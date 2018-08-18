@@ -17,6 +17,7 @@ class Limiter
   def add_limit(seconds : Time::Span, count); end
 
   protected def increment_request; end
+
   protected def limited? : Tuple(Bool, Time::Span?)
     {false, nil}
   end
