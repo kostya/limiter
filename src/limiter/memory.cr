@@ -5,7 +5,7 @@ class Limiter::Memory < Limiter
     def initialize(@interval : Time::Span, @max_count : UInt64)
       @current_count = 0_u64
       @stopped = false
-      @clear_at = Time.now
+      @clear_at = Time.local
     end
 
     def increment
@@ -14,7 +14,7 @@ class Limiter::Memory < Limiter
 
     def clear
       @current_count = 0_u64
-      @clear_at = Time.now
+      @clear_at = Time.local
     end
 
     def current_count
@@ -30,7 +30,7 @@ class Limiter::Memory < Limiter
     end
 
     def next_free_after : Time::Span
-      @clear_at + interval - Time.now
+      @clear_at + interval - Time.local
     end
 
     def async_run

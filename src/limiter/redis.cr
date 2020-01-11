@@ -45,7 +45,7 @@ class Limiter::Redis(T) < Limiter
     end
 
     private def expire_at
-      Time.now.to_unix_ms + @milliseconds
+      Time.local.to_unix_ms + @milliseconds
     end
   end
 
