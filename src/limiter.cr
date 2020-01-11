@@ -1,5 +1,5 @@
 class Limiter
-  VERSION = "0.2"
+  VERSION = "0.3"
 
   module Concurrency
   end
