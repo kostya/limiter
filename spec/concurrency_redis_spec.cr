@@ -2,8 +2,7 @@ require "./spec_helper"
 
 describe Limiter::Concurrency::Redis do
   it "works" do
-    # l = Limiter::Concurrency::Redis(Redisoid).new(Global.redis, "default", 10)
-    l = Limiter::Redis(Redisoid).new(Global.redis, "default")
+    l = Limiter::Redis(Redis::PooledClient).new(Global.redis, "default")
     l.add_limit(2.seconds, 10)
 
     ch = Channel(Int32).new

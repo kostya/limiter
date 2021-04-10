@@ -1,19 +1,19 @@
 require "spec"
 require "../src/limiter"
 require "../src/limiter/redis"
-require "redisoid"
+require "redis"
 
 class Global
-  @@redis : Redisoid?
+  @@redis : Redis::PooledClient?
 
   def self.redis
-    @@redis ||= Redisoid.new
+    @@redis ||= Redis::PooledClient.new
   end
 end
 
 def cleanup
   Global.redis.keys("limiter-*").each do |key|
-    Global.redis.del key
+    Global.redis.del key.to_s
   end
 end
 

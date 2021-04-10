@@ -5,7 +5,8 @@ authors:
   - Konstantin Makarchev <kostya27@gmail.com>
 
 development_dependencies:
-  redisoid:
-    github: kostya/redisoid
+  redis:
+    github: stefanwille/crystal-redis
+    version: ">= 2.0.0"
 
 license: MIT

@@ -63,12 +63,12 @@ p limited_count
 ## Example Redis Limiter
 
 ```crystal
-require "redisoid" # https://github.com/kostya/redisoid
+require "redis"
 require "limiter"
 
-redis_client = Redisoid.new
+redis_client = Redis::PooledClient.new
 
-limiter = Limiter::Redis(Redisoid).new(redis_client, "my_limiter1")
+limiter = Limiter::Redis(Redis::PooledClient).new(redis_client, "my_limiter1")
 limiter.add_limit(2.seconds, 10) # allow 10 requests per 2.seconds
 limiter.add_limit(1.hour, 1000)  # allow 1000 requests per 1.hour
 
